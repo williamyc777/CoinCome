@@ -9,12 +9,6 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-<<<<<<< HEAD
-      path: '/dashboard', // 修改为 path
-      name: 'dashboard',
-      component: () => import('@/components/dashboard/DashboardView.vue')
-    }
-=======
       path: '/',
       name: 'home',
       component: Home
@@ -39,7 +33,11 @@ const router = createRouter({
       name: 'signup',
       component: Signup
     },
->>>>>>> origin/leng
+    {
+      path: '/dashboard', 
+      name: 'dashboard',
+      component: () => import('@/components/dashboard/DashboardView.vue')
+    }
   ],
 })
 

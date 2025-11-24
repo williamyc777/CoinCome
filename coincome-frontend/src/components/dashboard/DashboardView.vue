@@ -1,15 +1,15 @@
-<template>
-  <div>
-    <h1>Dashboard 1234</h1>
-    <DisplayTable />
-
-  </div>
-</template>
-
 <script setup>
+import Header from './Header/Header.vue'
 import DisplayTable from './DisplayTable/DisplayTable.vue'
 </script>
 
-<style scoped>
+<template>
+  <div>
+    <Header />
+    <DisplayTable />
+  </div>
+</template>
 
+<style scoped>
 </style>
+

@@ -1,18 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '@/views/Home.vue'
-import SignIn from '@/views/SignIn.vue'
-import GoogleCallback from '@/views/GoogleCallback.vue'
-import HomeAfter from '@/views/HomeAfter.vue'
-import Signup from '@/views/Signup.vue'
-import Upload from '@/views/upload.vue'
+import Home from '@/compo/Home.vue'
+import SignIn from '@/compo/SignIn.vue'
+import GoogleCallback from '@/compo/GoogleCallback.vue'
+import HomeAfter from '@/compo/HomeAfter.vue'
+import Signup from '@/compo/Signup.vue'
+import Upload from '@/compo/upload.vue'
+import Landing from '@/components/Landing/Landing.vue'
+import SigninForm from '@/components/LoginView/SigninForm.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: Home
+      name: 'landing',
+      component: Landing
     },
     {
       path: '/signin',
@@ -44,6 +46,11 @@ const router = createRouter({
       name: 'upload',
       component: Upload
     },
+    // {
+    //   path: '/landing',
+    //   name: 'landing',
+    //   component: Home
+    // },
   ],
 })
 

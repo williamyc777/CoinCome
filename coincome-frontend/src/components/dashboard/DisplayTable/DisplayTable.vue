@@ -132,7 +132,7 @@ export default {
         (coin) =>
           coin.name.toLowerCase().includes(s) ||
           coin.symbol.toLowerCase().includes(s)
-      );
+      );           
     });
 
     function toggleStar(symbol) {

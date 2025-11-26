@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '@/views/Dashboard/Dashboard.vue'
 import GoogleCallback from '@/views/GoogleCallBack/GoogleCallBack.vue'
-import HomeAfter from '@/compo/HomeAfter.vue'
-import Upload from '@/compo/upload.vue'
+import Upload from '@/views/Upload/Upload.vue'
 import Landing from '@/views/Landing/Landing.vue'
 import Market from '@/views/Market/Market.vue'
 
@@ -24,11 +23,6 @@ const router = createRouter({
       path: '/auth/google/callback',
       name: 'googlecallback',
       component: GoogleCallback
-    },
-    {
-      path: '/homeafter',
-      name: 'homeafter',
-      component: HomeAfter
     },
     {
       path: '/market',

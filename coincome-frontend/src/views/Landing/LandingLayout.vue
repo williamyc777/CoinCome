@@ -16,7 +16,7 @@
                         <a @click = "goToDashboard">Dashboard</a>
                         <a @click = "goToUpload">Upload CSV</a>
                         <a @click = "goToPortfolio">My portfolio</a>
-                        <a @click = "goToPortfolio">Recommendations</a>
+                        <a @click = "goToRecommended">Recommendations</a>
                         <a @click = "goToMarket">Market</a>
                     </nav>
                 </div>
@@ -56,6 +56,10 @@ const goToPortfolio = () => {
 
 const goToMarket = () => {
     router.push('/market');
+}
+
+const goToRecommended = () => {
+    router.push('/portfolio/recommended');
 }
 
 </script>

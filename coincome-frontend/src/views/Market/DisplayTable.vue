@@ -1,5 +1,6 @@
 <template>
-  <table class="crypto-table">
+  <div class="table-container">
+    <table class="crypto-table">
       <thead>
         <tr>
           <th v-if="showStar" class="star-header"></th>
@@ -8,7 +9,18 @@
           <th class="right">Price</th>
           <th class="right">24h Change</th>
           <th class="right">24h Volume</th>
-          <th class="right">Market Cap</th>
+          <th class="right market-cap-header">
+            <div class="header-with-time">
+              <span>Market Cap</span>
+              <span class="updated-at">
+                <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ formattedUpdateTime }}
+              </span>
+            </div>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -51,7 +63,8 @@
           <td class="right market-cap">{{ coin.marketCap }}</td>
         </tr>
       </tbody>
-  </table>
+    </table>
+  </div>
 </template>
 
 <script>
@@ -132,6 +145,18 @@ export default {
     ]);
 
     const starred = ref({});
+    const updatedAt = ref(new Date());
+
+    const formattedUpdateTime = computed(() => {
+      const date = updatedAt.value;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    });
 
     const filteredCoins = computed(() => {
       let result = coins.value;
@@ -168,12 +193,46 @@ export default {
       filteredCoins,
       toggleStar,
       onImgError,
+      formattedUpdateTime,
     };
   },
 };
 </script>
 
 <style scoped>
+/* Table Container */
+.table-container {
+  width: 100%;
+}
+
+/* Market Cap Header with Time */
+.market-cap-header {
+  min-width: 180px;
+}
+
+.header-with-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.updated-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.clock-icon {
+  width: 11px;
+  height: 11px;
+  opacity: 0.7;
+}
+
 /* Table */
 .crypto-table {
   width: 100%;

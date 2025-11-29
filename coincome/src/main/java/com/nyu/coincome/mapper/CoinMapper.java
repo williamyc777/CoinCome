@@ -16,7 +16,7 @@ public interface CoinMapper extends BaseMapper<Coin> {
     @Select("SELECT Cg_id FROM Coin WHERE CoinId=#{coinId}")
     String findCgId(Integer coinId);
 
-    @Select("SELECT CoinID, CoinName, Cg_id, CoinType, UpdatedAt FROM `Coin`")
+    @Select("SELECT CoinID, CoinName, Cg_id, CoinType, UpdatedAt FROM `Coin` ORDER BY CoinID ASC LIMIT 10")
     @Results(id = "coinMap", value = {
             @Result(column = "CoinID", property = "coinId"),
             @Result(column = "CoinName", property = "coinName"),

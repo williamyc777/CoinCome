@@ -33,3 +33,8 @@ export function registerUser({ username, email, password }) {
     passwordHash: password, // 跟你原来的字段保持一致
   })
 }
+
+//个人资产页面
+export function getOverall() {
+  return http.get('/api/user/holdings')
+}

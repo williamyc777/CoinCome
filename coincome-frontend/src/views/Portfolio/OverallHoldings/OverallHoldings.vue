@@ -176,23 +176,24 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { onMounted } from 'vue'
+import { getOverall } from '@/api/user'
 
 // Portfolio data
-const totalValue = ref(25000)
-const totalReturn = ref(42.5)
-const riskLevel = ref('Moderate')
+const totalValue = ref(0)
+const totalReturn = ref(0)
+const riskLevel = ref('Null')
 
 const pieColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#14b8a6', '#a855f7', '#0ea5e9']
 
 const holdings = ref([
-  { symbol: 'BTC', fullName: 'Bitcoin', amount: 0.15, value: 10000, percentage: 40 },
-  { symbol: 'ETH', fullName: 'Ethereum', amount: 2.5, value: 7500, percentage: 30 },
-  { symbol: 'SOL', fullName: 'Solana', amount: 25, value: 3750, percentage: 15 },
-  { symbol: 'DOGE', fullName: 'Dogecoin', amount: 15000, value: 3750, percentage: 15 }
+  // { symbol: 'BTC', fullName: 'Bitcoin', amount: 0.15, value: 10000, percentage: 40 },
+  // { symbol: 'Null', fullName: 'Null', amount: 0, value: 0, percentage: 0 }
 ])
 
 // Calculate solid pie chart slices
 const pieSlices = computed(() => {
+  if (!holdings.value || holdings.value.length === 0) return []
   const slices = []
   let currentAngle = -90
   const radius = 80
@@ -254,6 +255,23 @@ const areaPathFull = computed(() => {
   })
   path += ` L ${points[points.length - 1].x} 180 Z`
   return path
+})
+
+// 从后端获取数据
+const getOverallHoldings = async () => {
+  try {
+    const res = await getOverall()
+    totalValue.value = res.data.data.totalValue
+    totalReturn.value = res.data.data.totalReturn
+    riskLevel.value=res.data.data.riskLevel
+    holdings.value=res.data.data.holdings
+  } catch (err) {
+    console.error('Failed to load', err)
+  }
+}
+// 页面加载自动调用
+onMounted(() => {
+  getOverallHoldings()
 })
 </script>
 

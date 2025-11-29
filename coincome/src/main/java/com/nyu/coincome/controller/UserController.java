@@ -15,7 +15,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Comparator;
+
+import java.util.*;
 import java.io.FileReader;
 import java.math.RoundingMode;
 import java.io.File;
@@ -24,10 +25,6 @@ import java.security.MessageDigest;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -561,6 +558,117 @@ public class UserController {
         }
         return Result.success(resultList);
     }
+
+    @GetMapping("/holdings")
+    public Result holdings(HttpServletRequest request){
+        // 从 Token 中获取 userId
+        Users currentUser = (Users) request.getAttribute("currentUser");
+        if (currentUser == null) {
+            return Result.error("Invalid token");
+        }
+        Integer userId = currentUser.getUserId();
+        //根据userId查找用户的UserCoinAgg表
+        List<UserCoinAgg> list = userCoinAggMapper.findUserCoinAgg(userId);
+        if(list==null||list.isEmpty()){
+            return Result.success(Collections.emptyMap());
+        }
+        // 需要返回的三个整体数据
+        BigDecimal totalValue = BigDecimal.ZERO;  //总收益
+        BigDecimal totalCost = BigDecimal.ZERO;    //总成本
+        BigDecimal realizedPnl = BigDecimal.ZERO;  //总收益百分比
+        int coinCount = list.size();  //币的种类数量
+        //准备holdings 和用于计算风险的map
+        List<Map<String,Object>> holdingsList=new ArrayList<>();
+        Map<Integer,BigDecimal> marketValueMap=new HashMap<>();
+
+        //首先每一种币的市值和成本
+        for (UserCoinAgg agg : list) {
+            BigDecimal qty = agg.getQtyTotal();                   // 币的数量
+            BigDecimal avgCost = agg.getWAvgCost();               // 币的平均成本价
+            BigDecimal coinRealizedPnl = agg.getRealizedPnlTotal(); // 币的已实现盈亏
+            Integer coinId= agg.getCoinId();
+            String Cg_id=coinMapper.findCgId(coinId);
+            //查找当前价格在MarketData里
+            Double cp = marketDataMapper.getprice(coinId);
+            //BigDecimal currentPrice = getCurrentPrice(Cg_id);     // 币的当前市场价格
+            BigDecimal currentPrice = BigDecimal.valueOf(cp==null?0:cp);
+            log.info("CoinId={}, cg_id={}, current price={}",agg.getCoinId(),Cg_id,currentPrice);
+
+            // 1. 成本 = qty * avgCost
+            BigDecimal costForThisCoin = qty.multiply(avgCost);
+            totalCost = totalCost.add(costForThisCoin);
+            // 2. 市值 = qty * currentPrice
+            BigDecimal marketValue = qty.multiply(currentPrice);
+            totalValue = totalValue.add(marketValue);
+            // 3. 已实现盈亏累加
+            realizedPnl = realizedPnl.add(coinRealizedPnl);
+
+            marketValueMap.put(coinId,marketValue);
+        }
+
+        // 综合收益率
+        BigDecimal returnPct = BigDecimal.ZERO;
+        if (totalCost.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal netProfit = totalValue.subtract(totalCost).add(realizedPnl);
+            returnPct = netProfit
+                    .divide(totalCost, 6, RoundingMode.HALF_UP)   // 保留 6 位小数
+                    .multiply(new BigDecimal("100"));
+        }
+
+        //计算risklevel
+        String riskLevel=computeRiskLevel(marketValueMap);
+
+        //构建holings数据（symbol,fullName,amount,value,percentage）
+        for(UserCoinAgg agg : list){
+            Integer coinId=agg.getCoinId();
+            Coin coin=coinMapper.selectById(coinId);
+            BigDecimal marketValue=marketValueMap.get(coinId);
+            double pct = marketValue
+                    .divide(totalValue, 6, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100))
+                    .doubleValue();
+            Map<String, Object> h = new HashMap<>();
+            h.put("symbol",coin.getCoinName());
+            h.put("fullName",coin.getCgId());
+            h.put("amount",agg.getQtyTotal());
+            h.put("value",marketValue.doubleValue());
+            h.put("percentage",pct);
+
+            holdingsList.add(h);
+        }
+
+        // 返回前端
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalValue", totalValue.doubleValue());
+        result.put("totalReturn", returnPct.doubleValue());
+        result.put("coinCount", coinCount);
+        result.put("riskLevel", riskLevel);
+        result.put("holdings", holdingsList);
+        return Result.success(result);
+    }
+    //计算风险型
+    private String computeRiskLevel(Map<Integer, BigDecimal> marketValueMap) {
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (BigDecimal v : marketValueMap.values()) {
+            total = total.add(v);
+        }
+
+        BigDecimal hhi = BigDecimal.ZERO;
+        for (BigDecimal v : marketValueMap.values()) {
+            if (total.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal p = v.divide(total, 6, RoundingMode.HALF_UP);
+                hhi = hhi.add(p.multiply(p));
+            }
+        }
+
+        double h = hhi.doubleValue();
+
+        if (h < 0.2) return "Low";
+        if (h < 0.4) return "Moderate";
+        return "High";
+    }
+
 
 
 

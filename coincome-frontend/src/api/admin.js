@@ -23,11 +23,21 @@ export function addCoin(payload) {
   return http.post('/api/admin/coins', payload)
 }
 
-
+// 从 JSON 文件导入币种
 export function importCoinsFromJson(formData) {
   return http.post('/api/admin/coin/import-json-file', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   })
+}
+
+// 获取用户列表
+export function fetchAdminUsers() {
+  return http.get('/api/admin/users')
+}
+
+// 更新用户
+export function updateAdminUser(userId, payload) {
+  return http.put(`/api/admin/users/${userId}`, payload)
 }

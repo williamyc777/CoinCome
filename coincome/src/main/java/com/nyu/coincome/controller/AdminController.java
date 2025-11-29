@@ -3,6 +3,8 @@ package com.nyu.coincome.controller;
 import com.nyu.coincome.entity.Result;
 import com.nyu.coincome.entity.Coin;
 import com.nyu.coincome.entity.Exchange;
+import com.nyu.coincome.entity.dto.AdminUserDTO;
+import com.nyu.coincome.entity.dto.AdminUserUpdateDTO;
 import com.nyu.coincome.service.AdminManageService;
 import com.nyu.coincome.service.AdminService;
 import com.nyu.coincome.utils.JwtUtil;
@@ -122,4 +124,28 @@ public class AdminController {
         private String coinName;
         private String coinType;
     }
+
+    // GET /api/admin/users  列出所有用户
+    @GetMapping("/users")
+    public Result listUsers() {
+        List<AdminUserDTO> list = adminService.listAllUsers();
+        return Result.success(list);
+    }
+
+    // PUT /api/admin/users/{userId}  修改用户
+    @PutMapping("/users/{userId}")
+    public Result updateUser(@PathVariable Integer userId,
+                             @RequestBody AdminUserUpdateDTO dto) {
+        try {
+            dto.setUserId(userId);
+            adminService.updateUser(dto);
+            return Result.success();
+        } catch (IllegalArgumentException e) {
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            return Result.error("Update failed: " + e.getMessage());
+        }
+    }
+
+
 }

@@ -4,6 +4,7 @@ import GoogleCallback from '@/views/GoogleCallBack/GoogleCallBack.vue'
 import Upload from '@/views/Upload/Upload.vue'
 import Landing from '@/views/Landing/Landing.vue'
 import Market from '@/views/Market/Market.vue'
+import CoinDetail from '@/views/Market/CoinDetail.vue'
 import Portfolio from '@/views/Portfolio/Portfolio.vue'
 import OverallHoldings from '@/views/Portfolio/OverallHoldings/OverallHoldings.vue'
 import ByExchange from '@/views/Portfolio/ByExchange/ByExchange.vue'
@@ -40,6 +41,14 @@ const router = createRouter({
       path: '/market',
       name: 'market',
       component: Market,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/market/:symbol',
+      name: 'coinDetail',
+      component: CoinDetail,
       meta: {
         requiresAuth: true
       }

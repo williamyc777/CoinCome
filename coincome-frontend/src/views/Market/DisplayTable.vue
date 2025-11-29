@@ -24,12 +24,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(coin, idx) in filteredCoins" :key="coin.symbol" class="table-row">
+        <tr v-for="(coin, idx) in filteredCoins" :key="coin.symbol" class="table-row" @click="goToDetail(coin.symbol)">
           <td v-if="showStar" class="star-cell">
             <span
               class="star"
               :class="{ active: starred[coin.symbol] }"
-              @click="toggleStar(coin.symbol)"
+              @click.stop="toggleStar(coin.symbol)"
               title="Favorite"
             >
               {{ starred[coin.symbol] ? '★' : '☆' }}
@@ -69,6 +69,7 @@
 
 <script>
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'DisplayTable',
@@ -87,6 +88,8 @@ export default {
     }
   },
   setup(props) {
+    const router = useRouter();
+
     const coins = ref([
       {
         name: 'Bitcoin',
@@ -187,12 +190,17 @@ export default {
       e.target.src = 'https://dummyimage.com/40x40/eee/aaa.png?text=?';
     }
 
+    function goToDetail(symbol) {
+      router.push(`/market/${symbol.toLowerCase()}`);
+    }
+
     return {
       showStar: props.showStar,
       starred,
       filteredCoins,
       toggleStar,
       onImgError,
+      goToDetail,
       formattedUpdateTime,
     };
   },

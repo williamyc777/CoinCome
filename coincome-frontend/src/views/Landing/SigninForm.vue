@@ -87,6 +87,7 @@ const loginPasskey = () => {
 };
 
 const loginGoogle = () => {
+  // Initialize the Google OAuth2 client
   const client = google.accounts.oauth2.initCodeClient({
     client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     scope: "openid email profile",
@@ -97,8 +98,10 @@ const loginGoogle = () => {
   client.requestCode();
 };
 
-
 </script>
+
+
+
 
 <style scoped>
 .signin-modal {
@@ -147,7 +150,6 @@ const loginGoogle = () => {
 
 
 /* middle card */
-/* 中间这张卡片*/
 .signin-box {
   width: 380px;
   padding: 32px 28px 26px;

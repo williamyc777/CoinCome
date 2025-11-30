@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
 import Dashboard from '@/views/Dashboard/Dashboard.vue'
 import GoogleCallback from '@/views/GoogleCallBack/GoogleCallBack.vue'
 import Upload from '@/views/Upload/Upload.vue'

@@ -3,70 +3,67 @@
     <table class="crypto-table">
       <thead>
         <tr>
-          <th v-if="showStar" class="star-header"></th>
           <th class="index-header">#</th>
           <th class="left">Token</th>
           <th class="right">Price</th>
           <th class="right">24h Change</th>
           <th class="right">Type</th>
-          <!-- <th class="right market-cap-header">
-            <div class="header-with-time">
-              <span>Market Cap</span>
-              <span class="updated-at">
-                <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
-                {{ formattedUpdateTime }}
-              </span>
-            </div>
-          </th> -->
            <th class="right">
             Last Updated: {{ formattedUpdateTime }}
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(coin, idx) in filteredCoins" :key="coin.coinId" class="table-row" @click="goToDetail(coin.coinName)">
-          <td v-if="showStar" class="star-cell">
-            <span
-              class="star"
-              :class="{ active: starred[coin.symbol] }"
-              @click.stop="toggleStar(coin.coinName)"
-              title="Favorite"
-            >
-              {{ starred[coin.symbol] ? '★' : '☆' }}
-            </span>
-          </td>
-          <td class="index-cell">{{ idx + 1 }}</td>
-          <td class="name-cell">
-            <div class="token-content">
-              <div class="icon-wrap">
-                <img
-                  :src="makeIcon(coin.coinName)"
-                  :alt="coin.coinName"
-                  class="icon"
-                  @error="onImgError($event)"
-                />
+        <!-- Show Loading -->
+        <template v-if="isLoading">
+          <tr v-for="i in skeletonRows" :key="'skeleton-' + i" class="skeleton-row">
+            <td class="index-cell"><div class="skeleton skeleton-index"></div></td>
+            <td class="name-cell">
+              <div class="token-content">
+                <div class="skeleton skeleton-icon"></div>
+                <div class="name-info">
+                  <div class="skeleton skeleton-name"></div>
+                  <div class="skeleton skeleton-symbol"></div>
+                </div>
               </div>
-              <div class="name-info">
-                <span class="name">{{ coin.cgId }}</span>
-                <span class="symbol">{{ coin.coinName }}</span>
+            </td>
+            <td class="right"><div class="skeleton skeleton-price"></div></td>
+            <td class="right"><div class="skeleton skeleton-change"></div></td>
+            <td class="right"><div class="skeleton skeleton-type"></div></td>
+            <td class="right"><div class="skeleton skeleton-date"></div></td>
+          </tr>
+        </template>
+        <!-- Show Content -->
+        <template v-else>
+          <tr v-for="(coin, idx) in filteredCoins" :key="coin.coinId" class="table-row" @click="goToDetail(coin.coinName)">
+            <td class="index-cell">{{ idx + 1 }}</td>
+            <td class="name-cell">
+              <div class="token-content">
+                <div class="icon-wrap">
+                  <img
+                    :src="makeIcon(coin.coinName)"
+                    :alt="coin.coinName"
+                    class="icon"
+                    @error="onImgError($event)"
+                  />
+                </div>
+                <div class="name-info">
+                  <span class="name">{{ coin.cgId }}</span>
+                  <span class="symbol">{{ coin.coinName }}</span>
+                </div>
               </div>
-            </div>
-          </td>
-          <td class="right price">{{ coin.price.toLocaleString() }}</td>
-          <td class="right">
-            <span :class="['change', coin.change > 0 ? 'up' : coin.change < 0 ? 'down' : '']">
-              <span v-if="coin.change > 0">+</span>
-              {{ coin.change }}%
-            </span>
-          </td>
-          <!-- <td class="right volume">{{ coin.volume }}</td>
-          <td class="right market-cap">{{ coin.marketCap }}</td> -->
-          <td class="right">{{ coin.coinType }}</td>
-          <td class="right">{{ coin.updatedAt }}</td>
-        </tr>
+            </td>
+            <td class="right price">{{ coin.price.toLocaleString() }}</td>
+            <td class="right">
+              <span :class="['change', coin.change > 0 ? 'up' : coin.change < 0 ? 'down' : '']">
+                <span v-if="coin.change > 0">+</span>
+                {{ coin.change }}%
+              </span>
+            </td>
+            <td class="right">{{ coin.coinType }}</td>
+            <td class="right">{{ coin.updatedAt }}</td>
+          </tr>
+        </template>
       </tbody>
     </table>
   </div>
@@ -89,13 +86,11 @@ export default {
       type: Number,
       default: null // null means show all
     },
-    showStar: {
-      type: Boolean,
-      default: true // show star column by default
-    }
   },
   setup(props) {
     const router = useRouter();
+    const isLoading = ref(true);
+    const skeletonRows = computed(() => props.limit || 5);
 
     const coins = ref([
       // {
@@ -154,7 +149,6 @@ export default {
       // },
     ]);
 
-    const starred = ref({});
     const updatedAt = ref(new Date());
     const icons = import.meta.glob('@/assets/*.png', { eager: true });
     function makeIcon(coinName) {
@@ -176,6 +170,8 @@ export default {
         // updatedAt.value = new Date(latest);
       } catch (e) {
         console.error('Fetch market failed', e);
+      } finally {
+        isLoading.value = false;
       }
     }
      // 初次加载
@@ -217,9 +213,6 @@ export default {
       return result;
     });
 
-    function toggleStar(symbol) {
-      starred.value[symbol] = !starred.value[symbol];
-    }
 
     function onImgError(e) {
       e.target.src = 'https://dummyimage.com/40x40/eee/aaa.png?text=?';
@@ -231,14 +224,13 @@ export default {
 
     return {
       coins,
-      showStar: props.showStar,
-      starred,
       filteredCoins,
-      toggleStar,
       onImgError,
       goToDetail,
       formattedUpdateTime,
       makeIcon,
+      isLoading,
+      skeletonRows,
     };
   },
 };
@@ -358,28 +350,6 @@ export default {
   text-align: center;
 }
 
-/* Star Column */
-.star-header,
-.star-cell {
-  width: 40px;
-  text-align: center;
-}
-
-.star {
-  font-size: 18px;
-  color: #cbd5e1;
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-}
-
-.star:hover {
-  color: #94a3b8;
-}
-
-.star.active {
-  color: #fbbf24;
-}
 
 /* Index Column */
 .index-header,
@@ -516,5 +486,69 @@ export default {
   .crypto-table tbody td:nth-child(7) {
     display: none;
   }
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: #eee;
+  border-radius: 6px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.skeleton-row {
+  pointer-events: none;
+}
+
+.skeleton-index {
+  width: 20px;
+  height: 18px;
+}
+
+.skeleton-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-name {
+  width: 100px;
+  height: 17px;
+  margin-bottom: 6px;
+}
+
+.skeleton-symbol {
+  width: 50px;
+  height: 14px;
+}
+
+.skeleton-price {
+  width: 80px;
+  height: 18px;
+  margin-left: auto;
+}
+
+.skeleton-change {
+  width: 70px;
+  height: 18px;
+  margin-left: auto;
+}
+
+.skeleton-type {
+  width: 50px;
+  height: 18px;
+  margin-left: auto;
+}
+
+.skeleton-date {
+  width: 130px;
+  height: 18px;
+  margin-left: auto;
 }
 </style>

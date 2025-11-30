@@ -2,7 +2,7 @@
   <LandingLayout>
     <div class="dashboard-container">
 
-      <!-- Banner -->
+      <!-- Banner Section -->
       <section class="banner-section">
         <h1 class="banner-title">See all your crypto. Grow it smarter.</h1>
         <p class="banner-subtitle">Track your portfolio and discover new opportunities</p>
@@ -27,18 +27,17 @@
         <!-- Asset -->
         <div class="asset-card" @click="goPortfolio">
           <div class="asset-content">
-            <!-- ⭐ 加载中 -->
+            <!-- Show Loading -->
             <template v-if="isLoading">
               <div class="asset-loading">
                 <div class="skeleton skeleton-title"></div>
                 <div class="skeleton skeleton-row"></div>
                 <div class="skeleton skeleton-row"></div>
                 <div class="skeleton skeleton-row"></div>
-                <div class="skeleton-circle"></div>
               </div>
             </template>
 
-            <!-- 加载完成显示真实内容 -->
+            <!-- Show Content -->
             <template v-else>
                 <div class="asset-info">
                 <h3 class="asset-title">My Asset</h3>
@@ -63,7 +62,6 @@
               <div class="asset-visual">
                 <div class="chart-placeholder">
                   <svg width="120" height="120" viewBox="0 0 120 120">
-                    <!-- TODO: Return real 收益百分比 -->
                     <circle cx="60" cy="60" r="50" fill="none" stroke="#e9e6fb" stroke-width="20"/>
                     <circle cx="60" cy="60" r="50" fill="none" stroke="#6c5dd3" stroke-width="20"
                       :stroke-dasharray="circleCircumference"
@@ -86,10 +84,10 @@
             
           </div>
         </div>
-
       </section>
 
-      <!-- Hot Currencies -->
+
+      <!-- Hot Currencies Section-->
       <section class="currencies-section">
         <div class="section-header">
           <div class="header-left">
@@ -103,7 +101,8 @@
         <DisplayTable search="" :limit="5" :show-star="false" />
       </section>
 
-      <!-- Investment Portfolio -->
+      
+      <!-- Investment Portfolio Section-->
       <section class="portfolio-section">
         <div class="section-header">
           <h2 class="section-title">Investment Recommendations</h2>
@@ -794,7 +793,6 @@ const goMarket = () => {
 
 .skeleton {
   background: #eee;
-  height: 20px;
   border-radius: 8px;
   animation: pulse 1.5s infinite ease-in-out;
 }
@@ -809,15 +807,6 @@ const goMarket = () => {
   height: 20px;
 }
 
-.skeleton-circle {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: #eee;
-  margin-top: 12px;
-  align-self: center;
-  animation: pulse 1.5s infinite ease-in-out;
-}
 
 @keyframes pulse {
   0% { opacity: 0.7; }

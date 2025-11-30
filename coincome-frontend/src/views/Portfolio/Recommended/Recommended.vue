@@ -22,7 +22,9 @@
       <div class="banner-right">
         <div class="stat-group">
           <div class="stat-item">
-            <span class="stat-value green">+{{ currentRecommendation.expectedReturn }}%</span>
+            <span class="stat-value" :class="expectedReturnClass">
+              {{ formattedExpectedReturn }}
+            </span>
             <span class="stat-label">Expected Return</span>
           </div>
           <div class="stat-divider"></div>
@@ -133,153 +135,6 @@
   </section>
 </template>
 
-<!-- <script setup>
- import { ref, computed, onMounted } from 'vue'
- import { fetchRecommendedPortfolios } from '@/api/portfolio'
-
-
-const coinGradients = [
-  'linear-gradient(135deg, #6366f1, #818cf8)',
-  'linear-gradient(135deg, #10b981, #34d399)',
-  'linear-gradient(135deg, #f59e0b, #fbbf24)',
-  'linear-gradient(135deg, #ec4899, #f472b6)',
-  'linear-gradient(135deg, #8b5cf6, #a78bfa)',
-  'linear-gradient(135deg, #06b6d4, #22d3ee)',
-  'linear-gradient(135deg, #f97316, #fb923c)',
-  'linear-gradient(135deg, #14b8a6, #2dd4bf)'
-]
-
-const getCoinGradient = (index) => coinGradients[index % coinGradients.length]
-
-// Risk level selection
-const selectedRisk = ref('moderate')
-
-const riskLevels = [
-  { id: 'Conservative', label: 'Conservative' },
-  { id: 'Neutral', label: 'Neutral' },
-  { id: 'Aggressive', label: 'Aggressive' }
-]
-
-// Different recommendations for each risk level
-
-const recommendations = ref({
-  Conservative: null,
-  Neutral: null,
-  Aggressive: null
-})
-
-const isLoading = ref(false)
-const loadError = ref('')
-
-const loadRecommendations = async () => {
-  try {
-    isLoading.value = true
-    loadError.value = ''
-
-    const res = await fetchRecommendedPortfolios()
-    const list = res.data.data || []   // 后端 Result.success(list)
-
-    const map = {
-      Conservative: null,
-      Neutral: null,
-      Aggressive: null
-    }
-
-    list.forEach(p => {
-      // p 就是 UserPortfolioDTO
-      // {
-      //   portId, userId, riskLevel, optimizationDate,
-      //   targetReturn, targetRisk, note, weights: [...]
-      // }
-
-      const key = riskKeyMap[p.riskLevel] || 'moderate'
-
-      // 期望收益：把小数变成百分比（你可以按实际情况调）
-      const expectedReturnPct = p.targetReturn != null
-        ? Number((p.targetReturn * 100).toFixed(1))
-        : 0
-
-      // Sharpe：简单 targetReturn / targetRisk（如果你有更精准的就按你自己的）
-      let sharpe = null
-      if (p.targetRisk && p.targetRisk !== 0) {
-        sharpe = Number((p.targetReturn / p.targetRisk).toFixed(2))
-      }
-
-      // 把 weights 映射成前端这张表要的 data
-      const rows = (p.weights || []).map(w => ({
-        // w: PortfolioCoinWeightDTO { coinId, coinSymbol, weight }
-        coin: w.coinSymbol,
-        // 现在只有 target 权重，当前持仓/金额在别的接口，你后面可以来补
-        current: 0,                                   // 暂时先填 0 或从别的接口拿
-        target: Number((w.weight * 100).toFixed(1)),  // 0~1 -> 百分比
-        action: 'Rebalance',                          // 以后可以根据 current vs target 动态算 Buy/Sell/Hold
-        currentValue: null,
-        targetValue: null,
-        actionAmount: null,
-        currentPrice: null
-      }))
-
-      map[key] = {
-        description: p.note || defaultDesc[key],
-        expectedReturn: expectedReturnPct,
-        sharpeRatio: sharpe,
-        data: rows
-      }
-    })
-
-    recommendations.value = map
-  } catch (err) {
-    console.error('Failed to load portfolios:', err)
-    loadError.value = err?.response?.data?.msg || err?.message || 'Failed to load recommendations'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-onMounted(() => {
-  loadRecommendations()
-})
-
-
-const riskKeyMap = {
-  Conservative: 'Conservative',
-  Neutral: 'Neutral',
-  Aggressive: 'Aggressive'
-}
-
-
-const defaultDesc = {
-  Conservative: 'Lower risk approach focusing on stable assets and capital preservation',
-  Neutral: 'Based on Markowitz Modern Portfolio Theory for optimal risk-adjusted returns',
-  Aggressive: 'High growth potential with increased volatility exposure'
-}
-
-
-const currentRecommendation = computed(() => {
-  const data = recommendations.value[selectedRisk.value]
-  return data || {
-    description: '',
-    expectedReturn: 0,
-    sharpeRatio: 0,
-    data: []
-  }
-})
-
-
-// Expanded coin state
-const expandedCoin = ref(null)
-
-const toggleExpand = (coin) => {
-  expandedCoin.value = expandedCoin.value === coin ? null : coin
-}
-
-const getActionClass = (action) => {
-  if (action.includes('Sell')) return 'sell'
-  if (action.includes('Buy')) return 'buy'
-  return 'hold'
-}
-</script> -->
-
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { fetchRecommendedPortfolios } from '@/api/portfolio'
@@ -353,6 +208,23 @@ const currentRecommendation = computed(() => {
     data: []
   }
 })
+
+// 格式化 Expected Return：正值带 +，负值带 -，数值用绝对值避免重复负号
+const formattedExpectedReturn = computed(() => {
+  const v = currentRecommendation.value.expectedReturn ?? 0
+  if (v > 0) return `+${v}%`
+  if (v < 0) return `-${Math.abs(v)}%`
+  return `${v}%`
+})
+
+// 控制 Expected Return 的颜色（正绿负红，可按需调整）
+const expectedReturnClass = computed(() => {
+  const v = currentRecommendation.value.expectedReturn ?? 0
+  if (v > 0) return 'green'
+  if (v < 0) return 'red'
+  return ''
+})
+
 
 // =====================
 // ⭐ 新增：整体持仓数据（来自第二个组件的接口）
@@ -1003,4 +875,9 @@ onMounted(async () => {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.stat-value.red {
+  color: #fecaca; 
+}
+
 </style>

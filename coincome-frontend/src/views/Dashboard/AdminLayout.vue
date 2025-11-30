@@ -12,9 +12,18 @@
                 </div>
         
                 
-                <div class="header-right">
-                    <slot name="header-right"></slot>
-                </div>
+                    <div class="header-right">
+                    <!-- 已登录状态 -->
+                    <div v-if="isLoggedIn" class="user-box">
+                        <span class="user-name">Hi, {{ displayName }}</span>
+                        <button class="logout-btn" @click="handleLogout">Log out</button>
+                    </div>
+
+                    <!-- 未登录状态 -->
+                    <button v-else class="login-btn" @click="goToSignin">
+                        Sign in
+                    </button>
+                    </div>
             
             </header>
             <main class="main-content">
@@ -28,11 +37,33 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
-import IconSvg from '@/assets/icon_d.svg';
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import IconSvg from '@/assets/icon_d.svg'
+import { useUserStore } from '@/stores/user'
+
+
+const router = useRouter()
+const userStore = useUserStore()
+
+const isLoggedIn = computed(() => !!userStore.token || !!userStore.user)
+const displayName = computed(() => userStore.user?.username || 'User')
+
+
+const handleLogout = () => {
+    userStore.logout();
+
+    if (router.currentRoute.value.name !== 'landing') {
+        router.push({ name: 'landing' })
+    }  
+
+}
+
 </script>
 
 <style scoped>
+
+
 .landing-root {
     min-height: 100vh;
     font-family: 'Inter', Arial, sans-serif;
@@ -168,4 +199,47 @@ import IconSvg from '@/assets/icon_d.svg';
     font-weight: 500;
     letter-spacing: 0.2px;
 }
+
+.header-right {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 12px rgba(108, 93, 211, 0.15);
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3a2a68;
+}
+
+.logout-btn,
+.login-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #6c5dd3;
+  color: #ffffff;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.logout-btn:hover,
+.login-btn:hover {
+  background: #5a4bc2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 93, 211, 0.3);
+}
+
 </style>

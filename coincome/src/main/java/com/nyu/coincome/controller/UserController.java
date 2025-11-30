@@ -235,6 +235,12 @@ public class UserController {
             importBatchMapper.callRefreshUserCoinAgg(userId);
             log.info("UserCoinAgg refreshed for user {}", userId);
 
+            // 14. 计算协方差向量和投资组合
+            importBatchMapper.callGenerateAllCovarianceVectors();
+            importBatchMapper.callGenerateAllPortfolios();
+            importBatchMapper.callRecalculatePortfolioWeights();
+            log.info("Covariance vectors and portfolios recalculated.");
+
             return Result.success();
 
         } catch (Exception e) {

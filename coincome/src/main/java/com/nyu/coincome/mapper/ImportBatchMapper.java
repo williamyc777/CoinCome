@@ -2,9 +2,8 @@ package com.nyu.coincome.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nyu.coincome.entity.ImportBatch;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.mapping.StatementType;
 
 @Mapper
 public interface ImportBatchMapper extends BaseMapper<ImportBatch> {
@@ -22,4 +21,18 @@ public interface ImportBatchMapper extends BaseMapper<ImportBatch> {
     int insertParsedTransactions(@Param("batchId") Integer batchId);
 
     void callRefreshUserCoinAgg(Integer userId);
+
+    @Update("{CALL sp_GenerateAllCovarianceVectors()}")
+    @Options(statementType = StatementType.CALLABLE)
+    void callGenerateAllCovarianceVectors();
+
+    @Update("{CALL sp_GenerateAllPortfolios()}")
+    @Options(statementType = StatementType.CALLABLE)
+    void callGenerateAllPortfolios();
+
+    @Update("{CALL sp_RecalculatePortfolioWeights()}")
+    @Options(statementType = StatementType.CALLABLE)
+    void callRecalculatePortfolioWeights();
+
+
 }

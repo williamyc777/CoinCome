@@ -83,6 +83,10 @@
               <div class="asset-info">
                 <span class="asset-symbol">{{ item.symbol }}</span>
                 <span class="asset-name">{{ item.fullName }}</span>
+                <!-- 新增：展示 amount -->
+                <span class="asset-amount">
+                  {{ item.amount }} {{ item.symbol }}
+                </span>
               </div>
             </div>
             <div class="asset-right">
@@ -263,8 +267,8 @@ const getOverallHoldings = async () => {
     const res = await getOverall()
     totalValue.value = res.data.data.totalValue
     totalReturn.value = res.data.data.totalReturn
-    riskLevel.value=res.data.data.riskLevel
-    holdings.value=res.data.data.holdings
+    riskLevel.value = res.data.data.riskLevel
+    holdings.value = res.data.data.holdings
   } catch (err) {
     console.error('Failed to load', err)
   }
@@ -625,6 +629,13 @@ onMounted(() => {
   font-size: 12px;
   color: #6d28d9;
   opacity: 0.7;
+}
+
+/* 新增：amount 样式 */
+.asset-amount {
+  font-size: 12px;
+  color: #4b5563;
+  font-weight: 500;
 }
 
 .asset-right {

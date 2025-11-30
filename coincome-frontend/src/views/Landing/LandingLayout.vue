@@ -22,7 +22,7 @@
                     </nav>
                 </div>
                 
-                <div class="header-right">
+
                 <div class="header-right">
                 <!-- 已登录状态 -->
                 <div v-if="isLoggedIn" class="user-box">
@@ -34,7 +34,6 @@
                 <button v-else class="login-btn" @click="goToSignin">
                     Sign in
                 </button>
-                </div>
                 </div>
 
             </header>

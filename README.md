@@ -411,10 +411,4 @@ Frontend: [http://localhost:5173](http://localhost:5173)
 
 ---
 
-如果你需要：
-
-✅ 再加 Screenshot
-✅ 再加 Architecture Diagram（可自动绘制）
-✅ 再做一个简短版 README（for recruiters）
-
 都可以告诉我，我帮你生成！

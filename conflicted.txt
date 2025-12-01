@@ -1,0 +1,11 @@
+python/hours/BTC/BTC_2025-11-27-19.csv
+python/realtime/avalanche-2.csv
+python/realtime/binancecoin.csv
+python/realtime/bitcoin.csv
+python/realtime/cardano.csv
+python/realtime/dogecoin.csv
+python/realtime/ethereum.csv
+python/realtime/litecoin.csv
+python/realtime/ripple.csv
+python/realtime/solana.csv
+python/realtime/tether.csv

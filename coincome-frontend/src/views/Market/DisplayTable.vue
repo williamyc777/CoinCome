@@ -1,0 +1,554 @@
+<template>
+  <div class="table-container">
+    <table class="crypto-table">
+      <thead>
+        <tr>
+          <th class="index-header">#</th>
+          <th class="left">Token</th>
+          <th class="right">Price</th>
+          <th class="right">24h Change</th>
+          <th class="right">Type</th>
+           <th class="right">
+            Last Updated: {{ formattedUpdateTime }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Show Loading -->
+        <template v-if="isLoading">
+          <tr v-for="i in skeletonRows" :key="'skeleton-' + i" class="skeleton-row">
+            <td class="index-cell"><div class="skeleton skeleton-index"></div></td>
+            <td class="name-cell">
+              <div class="token-content">
+                <div class="skeleton skeleton-icon"></div>
+                <div class="name-info">
+                  <div class="skeleton skeleton-name"></div>
+                  <div class="skeleton skeleton-symbol"></div>
+                </div>
+              </div>
+            </td>
+            <td class="right"><div class="skeleton skeleton-price"></div></td>
+            <td class="right"><div class="skeleton skeleton-change"></div></td>
+            <td class="right"><div class="skeleton skeleton-type"></div></td>
+            <td class="right"><div class="skeleton skeleton-date"></div></td>
+          </tr>
+        </template>
+        <!-- Show Content -->
+        <template v-else>
+          <tr v-for="(coin, idx) in filteredCoins" :key="coin.coinId" class="table-row" @click="goToDetail(coin.coinName)">
+            <td class="index-cell">{{ idx + 1 }}</td>
+            <td class="name-cell">
+              <div class="token-content">
+                <div class="icon-wrap">
+                  <img
+                    :src="makeIcon(coin.coinName)"
+                    :alt="coin.coinName"
+                    class="icon"
+                    @error="onImgError($event)"
+                  />
+                </div>
+                <div class="name-info">
+                  <span class="name">{{ coin.cgId }}</span>
+                  <span class="symbol">{{ coin.coinName }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="right price">{{ coin.price.toLocaleString() }}</td>
+            <td class="right">
+              <span :class="['change', coin.change > 0 ? 'up' : coin.change < 0 ? 'down' : '']">
+                <span v-if="coin.change > 0">+</span>
+                {{ coin.change }}%
+              </span>
+            </td>
+            <td class="right">{{ coin.coinType }}</td>
+            <td class="right">{{ coin.updatedAt }}</td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { onMounted } from 'vue'
+import { getMarketData } from '@/api/user'
+
+export default {
+  name: 'DisplayTable',
+  props: {
+    search: {
+      type: String,
+      default: ''
+    },
+    limit: {
+      type: Number,
+      default: null // null means show all
+    },
+  },
+  setup(props) {
+    const router = useRouter();
+    const isLoading = ref(true);
+    const skeletonRows = computed(() => props.limit || 5);
+
+    const coins = ref([
+      // {
+      //   name: 'Bitcoin',
+      //   symbol: 'BTC',
+      //   icon: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
+      //   price: '$97,234',
+      //   change: 2.5,
+      //   volume: '$45.2B',
+      //   marketCap: '$1.92T',
+      // },
+      // {
+      //   name: 'Ethereum',
+      //   symbol: 'ETH',
+      //   icon: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
+      //   price: '$3,689',
+      //   change: -1.2,
+      //   volume: '$28.5B',
+      //   marketCap: '$443.6B',
+      // },
+      // {
+      //   name: 'Tether',
+      //   symbol: 'USDT',
+      //   icon: 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
+      //   price: '$1.00',
+      //   change: 0.01,
+      //   volume: '$89.3B',
+      //   marketCap: '$139.8B',
+      // },
+      // {
+      //   name: 'XRP',
+      //   symbol: 'XRP',
+      //   icon: 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+      //   price: '$2.42',
+      //   change: 1.5,
+      //   volume: '$12.8B',
+      //   marketCap: '$138.5B',
+      // },
+      // {
+      //   name: 'BNB',
+      //   symbol: 'BNB',
+      //   icon: 'https://assets.coingecko.com/coins/images/825/large/binance-coin-logo.png',
+      //   price: '$702',
+      //   change: 0.8,
+      //   volume: '$2.1B',
+      //   marketCap: '$101.2B',
+      // },
+      // {
+      //   name: 'Solana',
+      //   symbol: 'SOL',
+      //   icon: 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
+      //   price: '$242',
+      //   change: 3.2,
+      //   volume: '$6.7B',
+      //   marketCap: '$116.8B',
+      // },
+    ]);
+
+    const updatedAt = ref(new Date());
+    const icons = import.meta.glob('@/assets/*.png', { eager: true });
+    function makeIcon(coinName) {
+      // return `https://assets.coingecko.com/coins/images/1/large/${cgId}.png`;
+      const key = `/src/assets/${coinName}.png`
+      return icons[key]?.default || 'https://dummyimage.com/64x64/eee/aaa.png?text=?'
+    }
+    // --------------------------
+    // Fetch backend data
+    // --------------------------
+    async function fetchData() {
+      try {
+        const res = await getMarketData()
+        coins.value = res.data.data;
+        // 找这一批数据里最新 updatedAt
+        // const latest = Math.max(
+        //   ...coins.value.map((c) => new Date(c.updatedAt).getTime())
+        // );
+        // updatedAt.value = new Date(latest);
+      } catch (e) {
+        console.error('Fetch market failed', e);
+      } finally {
+        isLoading.value = false;
+      }
+    }
+     // 初次加载
+    onMounted(() => {
+      fetchData();
+      // 每 3 分钟刷新一次
+      setInterval(fetchData, 180000);
+    });
+
+    const formattedUpdateTime = computed(() => {
+      const date = updatedAt.value;
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    });
+
+    const filteredCoins = computed(() => {
+      let result = coins.value;
+
+      // Apply search filter
+      if (props.search) {
+        const s = props.search.toLowerCase();
+        result = result.filter(
+          (coin) =>
+            coin.name.toLowerCase().includes(s) ||
+            coin.symbol.toLowerCase().includes(s)
+        );
+      }
+
+      // Apply limit
+      if (props.limit) {
+        result = result.slice(0, props.limit);
+      }
+
+      return result;
+    });
+
+
+    function onImgError(e) {
+      e.target.src = 'https://dummyimage.com/40x40/eee/aaa.png?text=?';
+    }
+
+    function goToDetail(symbol) {
+      router.push(`/market/${symbol.toLowerCase()}`);
+    }
+
+    return {
+      coins,
+      filteredCoins,
+      onImgError,
+      goToDetail,
+      formattedUpdateTime,
+      makeIcon,
+      isLoading,
+      skeletonRows,
+    };
+  },
+};
+</script>
+
+<style scoped>
+/* Table Container */
+.table-container {
+  width: 100%;
+}
+
+/* Market Cap Header with Time */
+.market-cap-header {
+  min-width: 180px;
+}
+
+.header-with-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.updated-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.clock-icon {
+  width: 11px;
+  height: 11px;
+  opacity: 0.7;
+}
+
+/* Table */
+.crypto-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  background: transparent;
+  outline: none;
+  caret-color: transparent;
+}
+
+/* Table Header */
+.crypto-table thead th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: #64748b;
+  padding: 0 20px 12px 20px;
+  border: none;
+  background: transparent;
+}
+
+/* Table Body Row */
+.crypto-table tbody tr {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Table Body Cells */
+.crypto-table tbody td {
+  font-size: 16px;
+  color: #0f172a;
+  padding: 24px 20px;
+  border: none;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* First and Last Cell Radius */
+.crypto-table tbody td:first-child {
+  border-top-left-radius: 16px;
+  border-bottom-left-radius: 16px;
+}
+
+.crypto-table tbody td:last-child {
+  border-top-right-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+/* Row Hover Effect */
+.crypto-table tbody tr:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+/* Alignment */
+.left {
+  text-align: left;
+}
+
+.right {
+  text-align: right;
+}
+
+.center {
+  text-align: center;
+}
+
+
+/* Index Column */
+.index-header,
+.index-cell {
+  width: 60px;
+  text-align: left;
+  font-size: 15px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Token Name Cell */
+.name-cell {
+  width: 35%;
+}
+
+.token-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.icon-wrap {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.name-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.symbol {
+  font-size: 14px;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+/* Price Column */
+.price {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  width: 16%;
+}
+
+/* Change Column */
+.change {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.change.up {
+  color: #10b981;
+}
+
+.change.down {
+  color: #ef4444;
+}
+
+/* Volume and Market Cap */
+.volume,
+.market-cap {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 16px;
+  font-weight: 500;
+  color: #475569;
+  width: 16%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .crypto-table thead th {
+    font-size: 10px;
+    padding: 12px 8px;
+  }
+
+  .crypto-table tbody td {
+    font-size: 13px;
+    padding: 12px 8px;
+  }
+
+  .token-content {
+    gap: 8px;
+  }
+
+  .icon-wrap {
+    width: 32px;
+    height: 32px;
+  }
+
+  .icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
+
+  .symbol {
+    font-size: 12px;
+  }
+
+  /* Hide volume and market cap on small screens */
+  .crypto-table thead th:nth-child(6),
+  .crypto-table thead th:nth-child(7),
+  .crypto-table tbody td:nth-child(6),
+  .crypto-table tbody td:nth-child(7) {
+    display: none;
+  }
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: #eee;
+  border-radius: 6px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.skeleton-row {
+  pointer-events: none;
+}
+
+.skeleton-index {
+  width: 20px;
+  height: 18px;
+}
+
+.skeleton-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-name {
+  width: 100px;
+  height: 17px;
+  margin-bottom: 6px;
+}
+
+.skeleton-symbol {
+  width: 50px;
+  height: 14px;
+}
+
+.skeleton-price {
+  width: 80px;
+  height: 18px;
+  margin-left: auto;
+}
+
+.skeleton-change {
+  width: 70px;
+  height: 18px;
+  margin-left: auto;
+}
+
+.skeleton-type {
+  width: 50px;
+  height: 18px;
+  margin-left: auto;
+}
+
+.skeleton-date {
+  width: 130px;
+  height: 18px;
+  margin-left: auto;
+}
+</style>

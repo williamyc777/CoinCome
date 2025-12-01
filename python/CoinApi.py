@@ -1,20 +1,23 @@
+# 每种货币每天的价格走势
+
 import requests, pandas as pd, time, random
 from datetime import datetime
+import os
 
 COIN_MAP = {
-    # 1: ("bitcoin", "BTC"),
+    1: ("bitcoin", "BTC"),
     2: ("ethereum", "ETH"),
-    # 3: ("tether", "USDT"),
-    # 4: ("solana", "SOL"),
-    # 5: ("cardano", "ADA"),
-    # 6: ("ripple", "XRP"),
-    # 7: ("dogecoin", "DOGE"),
-    # 8: ("binancecoin", "BNB"),
-    # 9: ("litecoin", "LTC"),
-    # 10: ("avalanche-2", "AVAX")
+    3: ("tether", "USDT"),
+    4: ("solana", "SOL"),
+    5: ("cardano", "ADA"),
+    6: ("ripple", "XRP"),
+    7: ("dogecoin", "DOGE"),
+    8: ("binancecoin", "BNB"),
+    9: ("litecoin", "LTC"),
+    10: ("avalanche-2", "AVAX")
 }
 
-DAYS = 30
+DAYS = 7
 frames = []
 
 def fetch_with_retry(url, params, symbol, max_retries=5):
@@ -49,11 +52,9 @@ for coin_id, (cg_id, symbol) in COIN_MAP.items():
     params = {"vs_currency": "usd", "days": DAYS}
 
     r = fetch_with_retry(url, params, symbol)
-    #print(cg_id)
 
     if not r:
         continue
-
 
     try:
         data = r.json()
@@ -73,19 +74,30 @@ for coin_id, (cg_id, symbol) in COIN_MAP.items():
     df["Return"] = df["Price"].pct_change()
     df["IntervalType"] = "daily"
     df["MarketDate"] = df["timestamp"].dt.date
-    df["UpdatedAt"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    #df["UpdatedAt"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     df = df.dropna(subset=["Return"])
-    frames.append(df[["CoinID", "Price", "Return", "IntervalType", "MarketDate", "UpdatedAt"]])
 
+    #每种币保存在自己的csv文件里
+    folder_path = "days"
+    os.makedirs(folder_path, exist_ok=True)
+    file_path = f"{folder_path}/{symbol}.csv"
+    # 只保留需要的列
+    new_df = df[["CoinID", "Price", "Return", "IntervalType", "MarketDate"]].copy()
+    # 如果旧文件存在，先读出来
+    if os.path.exists(file_path):
+        try:
+            old_df = pd.read_csv(file_path, parse_dates=["MarketDate"])
+        except Exception as e:
+            print(f"⚠️ Failed to read {file_path}, recreating. Error: {e}")
+            old_df = pd.DataFrame()
+    else:
+        old_df = pd.DataFrame()
+    # 合并旧 + 新
+    merged = pd.concat([old_df, new_df], ignore_index=True)
+    # 按 MarketDate 去重（保留最新的）
+    merged = merged.sort_values("MarketDate").drop_duplicates(subset=["MarketDate"], keep="last")
+    # 保存
+    merged.to_csv(file_path, index=False)
+    print(f"📁 Updated file: {file_path} ({len(new_df)} new rows)")
     # 额外加点随机延迟（1~3秒），更像人类访问
     time.sleep(random.uniform(1.0, 3.0))
-
-# === 合并并保存 ===
-if frames:
-    result = pd.concat(frames, ignore_index=True)
-    filename = f"marketdata_mysql_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
-    result.to_csv(filename, index=False)
-    print(f"\n✅ Done! Saved to {filename}")
-    print(result.head())
-else:
-    print("⚠️ No data fetched at all.")

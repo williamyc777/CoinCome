@@ -62,4 +62,10 @@
         CALL sp_refresh_user_coin_agg(#{userId});
     </select>
 
+
+
+
+
+
+
 </mapper>
